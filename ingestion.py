@@ -30,14 +30,12 @@ def ingest_docs():
                 content = load_html_content(file_path)
                 if content.strip():
                     documents.append(
-                        Document(page_content=content,
-                                 metadata={"source": file_path})
+                        Document(page_content=content, metadata={"source": file_path})
                     )
 
     print(f"Found {len(documents)} documents")
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=600, chunk_overlap=50)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=50)
     chunks = text_splitter.split_documents(documents)
     print(f"Split into {len(chunks)} chunks")
 

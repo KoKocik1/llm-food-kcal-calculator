@@ -30,19 +30,24 @@ class HTMLCleaner:
                 soup = BeautifulSoup(file, "html.parser")
 
             # Remove disallowed divs
-            for div in soup.find_all("div", class_=lambda c: c in self.disallowed_classes if c else False):
+            for div in soup.find_all(
+                "div", class_=lambda c: c in self.disallowed_classes if c else False
+            ):
                 div.decompose()
 
-            for section in soup.find_all("section", class_=lambda c: c in self.disallowed_class_section if c else False):
+            for section in soup.find_all(
+                "section",
+                class_=lambda c: c in self.disallowed_class_section if c else False,
+            ):
                 section.decompose()
 
             # Keep only allowed divs
             filtered_divs = soup.find_all(
-                "div", class_=lambda c: c in self.allowed_classes if c else False)
+                "div", class_=lambda c: c in self.allowed_classes if c else False
+            )
 
             # Create a new soup with only allowed divs
-            new_soup = BeautifulSoup(
-                "<html><body></body></html>", "html.parser")
+            new_soup = BeautifulSoup("<html><body></body></html>", "html.parser")
             body = new_soup.body
 
             for div in filtered_divs:
@@ -54,7 +59,9 @@ class HTMLCleaner:
             print(f"Error processing {file_path}: {str(e)}")
             return None
 
-    def save_processed_html(self, original_path: Path, processed_soup: BeautifulSoup) -> None:
+    def save_processed_html(
+        self, original_path: Path, processed_soup: BeautifulSoup
+    ) -> None:
         """Save processed HTML while maintaining the folder structure"""
         try:
             base_dir = Path("calories_info")
