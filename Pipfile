@@ -5,11 +5,16 @@ name = "pypi"
 
 [packages]
 langchain = "*"
-langchain-openai = "*"
 black = "*"
 streamlit = "*"
 requests = "*"
 beautifulsoup4 = "*"
+python-dotenv = "*"
+langchain-community = "*"
+langchain-openai = "*"
+langchain-pinecone = "*"
+pymongo = "*"
+unstructured = "*"
 
 [dev-packages]
 
