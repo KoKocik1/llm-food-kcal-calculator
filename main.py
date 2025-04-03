@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 from db.meal_service import get_meals_by_day, delete_meal
-from backend.core import run_llm
+from agents.enhanced_grand_agent import process_user_input
 from backend.utils import get_formatted_response
 from db.settings_service import get_user_settings, update_user_settings
 import time
@@ -66,8 +66,9 @@ def main():
                 return
 
             with st.spinner("Processing your request..."):
-                generated_response = run_llm(
-                    query=prompt, chat_history=st.session_state.chat_history
+                generated_response = process_user_input(
+                    query=prompt,
+                    chat_history=st.session_state.chat_history
                 )
 
                 formatted_response, sources = get_formatted_response(

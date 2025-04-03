@@ -1,9 +1,10 @@
 from datetime import datetime
+from pydantic import BaseModel
 
 
-class MealCreate:
+class MealCreate(BaseModel):
     def __init__(
-        self, date: datetime, name: str, description: str, calories: int, category: str
+        self, date: str, name: str, description: str, calories: int, category: str
     ):
         self.date = date
         self.name = name
@@ -27,5 +28,5 @@ class MealCreate:
         self.calories = meal_dict["calories"]
         self.category = meal_dict["category"]
 
-    def __repr__(self):
-        return f"{self.to_dict()}"
+    # def __repr__(self):
+    #     return f"{self.to_dict()}"

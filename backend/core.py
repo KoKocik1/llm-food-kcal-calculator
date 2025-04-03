@@ -44,11 +44,25 @@ def run_llm(query, chat_history: List[Dict[str, Any]]):
         combine_docs_chain=stuff_documents_chain,
     )
 
-    result = qa.invoke({"input": query, "chat_history": chat_history})
+    # Add specific formatting instructions to the query
+    formatted_query = f"""
+    Please provide information about {query} in the following json format:
+    - name: Name of the food/meal
+    - description: Detailed description
+    - calories: Calories (as a number)
+    - category: One of: {get_categories()}
+    - date: Date of the meal in YYYY-MM-DD HH:MM format, Today is: {datetime.now().strftime("%Y-%m-%d %H:%M")}
+    If you can't find the information, you return a question to the user to specify.
+    """
 
+    result = qa.invoke(
+        {"input": formatted_query, "chat_history": chat_history})
+
+    # Parse the response to ensure it has the required fields
+    answer = result["answer"]
     new_result = {
         "query": result["input"],
-        "result": result["answer"],
+        "result": answer,
         "source_documents": result["context"],
     }
     return new_result

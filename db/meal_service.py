@@ -83,11 +83,17 @@ def create_meal(meal: MealCreate) -> Dict[str, Any]:
     """
     db = get_mongo_db()
     collection_meals = db[os.getenv("MONGO_COLLECTION_MEALS")]
-    meal_dict = meal.to_dict()
-    result = collection_meals.insert_one(meal_dict)
-    meal_dict["_id"] = result.inserted_id
-    print(f"Created meal: {meal_dict} with id: {result.inserted_id}")
-    return meal_dict
+
+    meal_dict = meal.dict()
+    meal_dict["date"] = datetime.strptime(meal_dict["date"], "%Y-%m-%d %H:%M")
+    try:
+        result = collection_meals.insert_one(meal_dict)
+        meal_dict["_id"] = result.inserted_id
+        print(f"Created meal: {meal_dict} with id: {result.inserted_id}")
+        return meal_dict
+    except Exception as e:
+        print(f"Error creating meal: {e}")
+        return {"error": str(e)}
 
 
 @tool
@@ -134,39 +140,41 @@ def get_total_kcal(date: str = datetime.now()) -> int:
 
 if __name__ == "__main__":
 
+    raw_data = {
+        'date': '2025-04-03 19:13',
+        'name': "McDonald's Cheeseburger Meal, small",
+        'description': 'A small meal consisting of a cheeseburger, small fries, and a small Coca-Cola.',
+        'calories': 670,
+        'category': 'Dinner'
+    }
+    meal_object = MealCreate(**raw_data)
+    print(meal_object)
+    print(type(meal_object))
     print("========== Create Meal ==========")
-    create_meal(
-        MealCreate(
-            name="Test Meal1",
-            calories=100,
-            category="Lunch",
-            date=datetime.now(),
-            description="Test Description1",
-        )
-    )
+    create_meal(meal_object)
     meals = get_meals_by_day(datetime.now())
     created_meal = list(filter(lambda x: x.name == "Test Meal1", meals))
     created_meal_id = created_meal[0]._id
     print(tabulate([meal.to_dict()
           for meal in meals], headers="keys", tablefmt="grid"))
 
-    print("========== Edit Meal ==========")
-    update_meal(
-        created_meal_id,
-        MealCreate(
-            name="Updated Meal1",
-            calories=200,
-            category="Lunch",
-            date=datetime.now(),
-            description="Updated Description1",
-        ),
-    )
-    meals = get_meals_by_day(datetime.now())
-    print(tabulate([meal.to_dict()
-          for meal in meals], headers="keys", tablefmt="grid"))
+    # print("========== Edit Meal ==========")
+    # update_meal(
+    #     created_meal_id,
+    #     MealCreate(
+    #         name="Updated Meal1",
+    #         calories=200,
+    #         category="Lunch",
+    #         date=datetime.now(),
+    #         description="Updated Description1",
+    #     ),
+    # )
+    # meals = get_meals_by_day(datetime.now())
+    # print(tabulate([meal.to_dict()
+    #       for meal in meals], headers="keys", tablefmt="grid"))
 
-    print("========== Delete Meal ==========")
-    delete_meal(created_meal_id)
-    meals = get_meals_by_day(datetime.now())
-    print(tabulate([meal.to_dict()
-          for meal in meals], headers="keys", tablefmt="grid"))
+    # print("========== Delete Meal ==========")
+    # delete_meal(created_meal_id)
+    # meals = get_meals_by_day(datetime.now())
+    # print(tabulate([meal.to_dict()
+    #       for meal in meals], headers="keys", tablefmt="grid"))
