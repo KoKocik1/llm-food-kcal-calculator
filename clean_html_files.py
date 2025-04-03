@@ -12,7 +12,6 @@ class HTMLCleaner:
         }
 
         self.disallowed_classes: Set[str] = {
-            "MuiGrid-root MuiGrid-container MuiGrid-spacing-xs-2 MuiGrid-justify-xs-space-between",
             "MuiListItemAvatar-root",
             "MuiBox-root jss417",
             "MuiBox-root jss419",
@@ -47,7 +46,8 @@ class HTMLCleaner:
             )
 
             # Create a new soup with only allowed divs
-            new_soup = BeautifulSoup("<html><body></body></html>", "html.parser")
+            new_soup = BeautifulSoup(
+                "<html><body></body></html>", "html.parser")
             body = new_soup.body
 
             for div in filtered_divs:
