@@ -52,3 +52,82 @@ def run_llm(query, chat_history: List[Dict[str, Any]]):
         "source_documents": result["context"],
     }
     return new_result
+
+
+def get_meal_chain() -> Any:
+    """Create a chain for meal-related operations."""
+    embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+    vectorstore = PineconeVectorStore(
+        index_name=os.getenv("PINECONE_INDEX_NAME"),
+        embedding=embeddings,
+    )
+    chat = ChatOpenAI(model="gpt-4o-mini", temperature=0, verbose=True)
+
+    # History Aware Retrieval
+    rephrase_prompt = hub.pull(LANGCHAIN_REPHRASE_HUB)
+    history_aware_retriever = create_history_aware_retriever(
+        llm=chat, retriever=vectorstore.as_retriever(), prompt=rephrase_prompt
+    )
+
+    # Retrieval QA Chat
+    retrieval_qa_chat_prompt = hub.pull(LANGCHAIN_HUB)
+    stuff_documents_chain = create_stuff_documents_chain(
+        chat, retrieval_qa_chat_prompt)
+
+    return create_retrieval_chain(
+        retriever=history_aware_retriever,
+        combine_docs_chain=stuff_documents_chain,
+    )
+
+
+def create_meal(query: str, chat_history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Create a new meal entry based on user query."""
+    qa = get_meal_chain()
+
+    # First, get meal information from Pinecone
+    meal_info_query = f"""
+    Tell me about the nutritional information and calories for: {query}.
+    Format your response as valid JSON with the following fields: name, description, calories, category, date.
+    The date should be today's date in YYYY-MM-DD HH:MM format. If the time is not specified, use the current time.
+    The category should be one of the following: {get_categories()}
+    The name should be a short description of the meal.
+    The description should be a detailed description of the meal. Only describe the ingredients from the query. Don't add any other ingredients.
+    The calories should be the number of calories in the meal (all the ingredients).
+    """
+
+    meal_info = qa.invoke(
+        {"input": meal_info_query, "chat_history": chat_history})
+
+    try:
+        # Parse the meal information
+        parsed_meal = meal_info_parser.parse(meal_info["answer"])
+        meal_dict = parsed_meal.to_dict()
+
+        # Create meal object
+        meal = MealCreate(
+            date=datetime.strptime(meal_dict["date"], "%Y-%m-%d %H:%M"),
+            name=meal_dict["name"],
+            description=meal_dict["description"],
+            calories=meal_dict["calories"],
+            category=meal_dict["category"]
+        )
+
+        # Save to database
+        saved_meal = db_create_meal(meal)
+
+        return {
+            "query": query,
+            "result": f"Created meal: {meal.name} with {meal.calories} calories",
+            "meal": saved_meal
+        }
+    except Exception as e:
+        return {
+            "query": query,
+            "result": "Failed to create meal",
+            "error": str(e)
+        }
+
+
+if __name__ == "__main__":
+    result = create_meal("I ate a hamburger", [])
+    print(result)
