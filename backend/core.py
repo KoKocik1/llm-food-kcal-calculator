@@ -128,6 +128,45 @@ def create_meal(query: str, chat_history: List[Dict[str, Any]]) -> Dict[str, Any
         }
 
 
+def update_meal(meal_id: str, query: str, chat_history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Update an existing meal entry."""
+    qa = get_meal_chain()
+
+    # Get updated meal information
+    meal_info_query = f"Tell me about the nutritional information and calories for: {query}. Format your response as valid JSON with the following fields: name, description, calories, category, date. The date should be today's date in YYYY-MM-DD format."
+    meal_info = qa.invoke(
+        {"input": meal_info_query, "chat_history": chat_history})
+
+    try:
+        # Parse the meal information
+        parsed_meal = meal_info_parser.parse(meal_info["answer"])
+        meal_dict = parsed_meal.to_dict()
+
+        # Update in database
+        updated_meal = db_update_meal(meal_id, meal_dict)
+
+        if not updated_meal:
+            return {
+                "query": query,
+                "result": "Meal not found",
+                "error": "Meal with specified ID does not exist"
+            }
+
+        return {
+            "query": query,
+            "result": f"Updated meal: {query} with {meal_dict['calories']} calories",
+            "meal": updated_meal
+        }
+    except Exception as e:
+        return {
+            "query": query,
+            "result": "Failed to update meal",
+            "error": str(e)
+        }
+
+
 if __name__ == "__main__":
     result = create_meal("I ate a hamburger", [])
     print(result)
+    result = update_meal(result["meal"]["_id"],
+                         "I ate a hamburger with fries", [])
