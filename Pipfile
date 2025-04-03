@@ -15,8 +15,14 @@ langchain-openai = "*"
 langchain-pinecone = "*"
 pymongo = "*"
 unstructured = "*"
+tabulate = "*"
+rich = "*"
+langchain-experimental = "*"
 
 [dev-packages]
+pytest = "*"
+pytest-cov = "*"
+pytest-mock = "*"
 
 [requires]
 python_version = "3.12"
